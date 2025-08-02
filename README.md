@@ -1,6 +1,6 @@
 # 🎓 Portfolio Archive [2025]
 
-Welcome to my portfolio archive!  
+Welcome to my portfolio!  
 This repository contains a little selection of projects completed during my **Engineering degree in Business Engineering – Application of IT in Business** (graduated in **January 2025**).
 
 These projects reflect my academic journey and practical applications of **data science**, **analytics**, and **business intelligence** concepts.  
