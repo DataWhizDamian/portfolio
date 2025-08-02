@@ -1,0 +1,14 @@
+cmd + e  = lista plików ostatnio otwartych
+2*shift   = wyszukiwarka (plików, klas, itd.)
+
+cmd + option + strzałka w lewo/prawo   = powrót kursorem do poprzedniego miejsca
+
+control + spacja = podpowiedz
+
+shift + F6 = zmiana nazwy we wszystkich miejscach naraz
+
+option + zaznaczenie = gdy chce pisać w kilki linijkach naraz
+
+cmd + n = gdy chce cos wygenerować
+
+shift (+cmd) + strzałka = zaznaczam (cały wiersz)
