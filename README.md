@@ -1,6 +1,19 @@
-# Portfolio
-Welcome to my portfolio! Below you'll find a collection of projects related to data science that I've worked on during my studies and beyond. My expertise spans Python, R, Tableau, Power BI, SQL, RapidMiner, and Excel.
+# 🎓 Portfolio Archive
 
-# About Me
+Welcome to my portfolio archive!  
+This repository contains a selection of projects completed during my **Engineering degree in Business Engineering – Application of IT in Business** (graduated in **January 2025**).
 
-I'm a passionate data scientist with experience in leveraging various tools and technologies to derive insights from data. I specialize in exploratory data analysis, data visualization, machine learning, and reporting.
+These projects reflect my academic journey and practical applications of **data science**, **analytics**, and **business intelligence** concepts.  
+During my studies, I worked with tools and technologies such as:
+
+- **Python**
+- **R**
+- **SQL**
+- **Tableau**
+- **Power BI**
+- **RapidMiner**
+- **Excel**
+
+Although these projects were created for academic purposes, they showcase my ability to **analyze data**, **design solutions**, and **deliver results** that connect both technical and business perspectives.
+
+> 📌 Note: This repository serves as an **archive** of my engineering studies work. 
