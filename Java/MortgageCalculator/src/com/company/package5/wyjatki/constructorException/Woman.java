@@ -1,0 +1,7 @@
+package com.company.package5.wyjatki.constructorException;
+
+public class Woman extends Person{
+    public Woman(int age) throws WrongAgeException{
+        super(age);
+    }
+}
