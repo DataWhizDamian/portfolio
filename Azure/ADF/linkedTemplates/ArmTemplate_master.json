@@ -1,0 +1,98 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "eruca-adf-prod"
+        },
+        "AzureBlobStorage1_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://erucadatalakeprod.dfs.core.windows.net/"
+        },
+        "HttpServer_OpenWeatherMap_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.openweathermap.org/data/2.5/"
+        },
+        "RestService_OpenWeatherMap_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.openweathermap.org/data/2.5/"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "eruca-server-prod.database.windows.net"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "eruca-db-prod"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "adm"
+        },
+        "AzureKeyVault1_properties_typeProperties_baseUrl": {
+            "type": "string",
+            "defaultValue": "https://eruca-kv-prod.vault.azure.net/"
+        },
+        "containerUri": {
+            "type": "string",
+            "metadata": "URI to storage account containing linked ARM templates"
+        },
+        "containerSasToken": {
+            "type": "string",
+            "metadata": "Sas token to storage account containing linked ARM templates"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "eruca-adf-prod_ArmTemplate_0",
+            "type": "Microsoft.Resources/deployments",
+            "apiVersion": "2024-03-01",
+            "properties": {
+                "mode": "incremental",
+                "templateLink": {
+                    "uri": "[concat(parameters('containerUri'), '/ArmTemplate_0.json', parameters('containerSasToken'))]",
+                    "contentVersion": "1.0.0.0"
+                },
+                "parameters": {
+                    "factoryName": {
+                        "value": "[parameters('factoryName')]"
+                    },
+                    "AzureBlobStorage1_connectionString": {
+                        "value": "[parameters('AzureBlobStorage1_connectionString')]"
+                    },
+                    "HttpServer_OpenWeatherMap_properties_typeProperties_url": {
+                        "value": "[parameters('HttpServer_OpenWeatherMap_properties_typeProperties_url')]"
+                    },
+                    "RestService_OpenWeatherMap_properties_typeProperties_url": {
+                        "value": "[parameters('RestService_OpenWeatherMap_properties_typeProperties_url')]"
+                    },
+                    "AzureKeyVault1_properties_typeProperties_baseUrl": {
+                        "value": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
+                    },
+                    "AzureDataLakeStorage1_properties_typeProperties_url": {
+                        "value": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_server": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_server')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_database": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_database')]"
+                    },
+                    "AzureSqlDatabase1_properties_typeProperties_userName": {
+                        "value": "[parameters('AzureSqlDatabase1_properties_typeProperties_userName')]"
+                    }
+                }
+            },
+            "dependsOn": []
+        }
+    ]
+}

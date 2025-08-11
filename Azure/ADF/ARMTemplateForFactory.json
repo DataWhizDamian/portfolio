@@ -1,0 +1,1151 @@
+{
+    "$schema": "http://schema.management.azure.com/schemas/2015-01-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "type": "string",
+            "metadata": "Data Factory name",
+            "defaultValue": "eruca-adf-prod"
+        },
+        "AzureBlobStorage1_connectionString": {
+            "type": "secureString",
+            "metadata": "Secure string for 'connectionString' of 'AzureBlobStorage1'"
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://erucadatalakeprod.dfs.core.windows.net/"
+        },
+        "HttpServer_OpenWeatherMap_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.openweathermap.org/data/2.5/"
+        },
+        "RestService_OpenWeatherMap_properties_typeProperties_url": {
+            "type": "string",
+            "defaultValue": "https://api.openweathermap.org/data/2.5/"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_server": {
+            "type": "string",
+            "defaultValue": "eruca-server-prod.database.windows.net"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_database": {
+            "type": "string",
+            "defaultValue": "eruca-db-prod"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_userName": {
+            "type": "string",
+            "defaultValue": "adm"
+        },
+        "AzureKeyVault1_properties_typeProperties_baseUrl": {
+            "type": "string",
+            "defaultValue": "https://eruca-kv-prod.vault.azure.net/"
+        }
+    },
+    "variables": {
+        "factoryId": "[concat('Microsoft.DataFactory/factories/', parameters('factoryName'))]"
+    },
+    "resources": [
+        {
+            "name": "[concat(parameters('factoryName'), '/config')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureBlobStorage1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobStorageLocation",
+                        "fileName": "europe_capitals_weather.json",
+                        "container": "configs"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureBlobStorage1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/sinkDeleteTemp')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorage1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "folderPath": {
+                            "value": "@concat(formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'), '/', formatDateTime(utcNow(), 'dd'), '/', 'temp')\n",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "raw"
+                    }
+                },
+                "schema": {}
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/OpenWeatherMapData')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "RestService_OpenWeatherMap",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "url": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "RestResource",
+                "typeProperties": {
+                    "relativeUrl": {
+                        "value": "@dataset().url",
+                        "type": "Expression"
+                    }
+                },
+                "schema": []
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/RestService_OpenWeatherMap')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureSqlTable1')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureSqlDatabase1",
+                    "type": "LinkedServiceReference"
+                },
+                "annotations": [],
+                "type": "AzureSqlTable",
+                "schema": [
+                    {
+                        "name": "CityName",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "Temperature",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "FeelsLike",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "TempMin",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "TempMax",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "Pressure",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "Humidity",
+                        "type": "int",
+                        "precision": 10
+                    },
+                    {
+                        "name": "WindSpeed",
+                        "type": "float",
+                        "precision": 15
+                    },
+                    {
+                        "name": "WeatherDescription",
+                        "type": "nvarchar"
+                    },
+                    {
+                        "name": "MeasurementTime",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    },
+                    {
+                        "name": "Date",
+                        "type": "datetime",
+                        "precision": 23,
+                        "scale": 3
+                    }
+                ],
+                "typeProperties": {
+                    "schema": "staging",
+                    "table": "WeatherData"
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/sourceDataLake')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorage1",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "capitol": {
+                        "type": "string"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@dataset().capitol",
+                            "type": "Expression"
+                        },
+                        "folderPath": {
+                            "value": "@concat(formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'), '/', formatDateTime(utcNow(), 'dd'))",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "raw"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "coord": {
+                            "type": "object",
+                            "properties": {
+                                "lon": {
+                                    "type": "number"
+                                },
+                                "lat": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "weather": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "main": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "base": {
+                            "type": "string"
+                        },
+                        "main": {
+                            "type": "object",
+                            "properties": {
+                                "temp": {
+                                    "type": "number"
+                                },
+                                "feels_like": {
+                                    "type": "number"
+                                },
+                                "temp_min": {
+                                    "type": "number"
+                                },
+                                "temp_max": {
+                                    "type": "number"
+                                },
+                                "pressure": {
+                                    "type": "integer"
+                                },
+                                "humidity": {
+                                    "type": "integer"
+                                },
+                                "sea_level": {
+                                    "type": "integer"
+                                },
+                                "grnd_level": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "visibility": {
+                            "type": "integer"
+                        },
+                        "wind": {
+                            "type": "object",
+                            "properties": {
+                                "speed": {
+                                    "type": "number"
+                                },
+                                "deg": {
+                                    "type": "integer"
+                                },
+                                "gust": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "rain": {
+                            "type": "object",
+                            "properties": {
+                                "1h": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "clouds": {
+                            "type": "object",
+                            "properties": {
+                                "all": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "dt": {
+                            "type": "integer"
+                        },
+                        "sys": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "integer"
+                                },
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "country": {
+                                    "type": "string"
+                                },
+                                "sunrise": {
+                                    "type": "integer"
+                                },
+                                "sunset": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "timezone": {
+                            "type": "integer"
+                        },
+                        "id": {
+                            "type": "integer"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "cod": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/sinkDataLake')]",
+            "type": "Microsoft.DataFactory/factories/datasets",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "linkedServiceName": {
+                    "referenceName": "AzureDataLakeStorage1",
+                    "type": "LinkedServiceReference"
+                },
+                "parameters": {
+                    "City": {
+                        "type": "String"
+                    }
+                },
+                "annotations": [],
+                "type": "Json",
+                "typeProperties": {
+                    "location": {
+                        "type": "AzureBlobFSLocation",
+                        "fileName": {
+                            "value": "@concat('weather_data_', dataset().City, '.json')",
+                            "type": "Expression"
+                        },
+                        "folderPath": {
+                            "value": "@concat(formatDateTime(utcNow(), 'yyyy'), '/', formatDateTime(utcNow(), 'MM'), '/', formatDateTime(utcNow(), 'dd'))\n",
+                            "type": "Expression"
+                        },
+                        "fileSystem": "raw"
+                    }
+                },
+                "schema": {
+                    "type": "object",
+                    "properties": {
+                        "coord": {
+                            "type": "object",
+                            "properties": {
+                                "lon": {
+                                    "type": "number"
+                                },
+                                "lat": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "weather": {
+                            "type": "array",
+                            "items": {
+                                "type": "object",
+                                "properties": {
+                                    "id": {
+                                        "type": "integer"
+                                    },
+                                    "main": {
+                                        "type": "string"
+                                    },
+                                    "description": {
+                                        "type": "string"
+                                    },
+                                    "icon": {
+                                        "type": "string"
+                                    }
+                                }
+                            }
+                        },
+                        "base": {
+                            "type": "string"
+                        },
+                        "main": {
+                            "type": "object",
+                            "properties": {
+                                "temp": {
+                                    "type": "number"
+                                },
+                                "feels_like": {
+                                    "type": "number"
+                                },
+                                "temp_min": {
+                                    "type": "number"
+                                },
+                                "temp_max": {
+                                    "type": "number"
+                                },
+                                "pressure": {
+                                    "type": "integer"
+                                },
+                                "humidity": {
+                                    "type": "integer"
+                                },
+                                "sea_level": {
+                                    "type": "integer"
+                                },
+                                "grnd_level": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "visibility": {
+                            "type": "integer"
+                        },
+                        "wind": {
+                            "type": "object",
+                            "properties": {
+                                "speed": {
+                                    "type": "number"
+                                },
+                                "deg": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "snow": {
+                            "type": "object",
+                            "properties": {
+                                "1h": {
+                                    "type": "number"
+                                }
+                            }
+                        },
+                        "clouds": {
+                            "type": "object",
+                            "properties": {
+                                "all": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "dt": {
+                            "type": "integer"
+                        },
+                        "sys": {
+                            "type": "object",
+                            "properties": {
+                                "type": {
+                                    "type": "integer"
+                                },
+                                "id": {
+                                    "type": "integer"
+                                },
+                                "country": {
+                                    "type": "string"
+                                },
+                                "sunrise": {
+                                    "type": "integer"
+                                },
+                                "sunset": {
+                                    "type": "integer"
+                                }
+                            }
+                        },
+                        "timezone": {
+                            "type": "integer"
+                        },
+                        "id": {
+                            "type": "integer"
+                        },
+                        "name": {
+                            "type": "string"
+                        },
+                        "cod": {
+                            "type": "integer"
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureDataLakeStorage1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl2_transform_and_load_to_db')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "ForEach1",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Get Metadata json files",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Get Metadata json files').output.childItems",
+                                "type": "Expression"
+                            },
+                            "isSequential": false,
+                            "activities": [
+                                {
+                                    "name": "Copy data to SQL database",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "JsonSource",
+                                            "storeSettings": {
+                                                "type": "AzureBlobFSReadSettings",
+                                                "recursive": true,
+                                                "enablePartitionDiscovery": false
+                                            },
+                                            "formatSettings": {
+                                                "type": "JsonReadSettings"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "AzureSqlSink",
+                                            "writeBehavior": "insert",
+                                            "sqlWriterUseTableLock": false,
+                                            "disableMetricsCollection": false
+                                        },
+                                        "enableStaging": false,
+                                        "translator": {
+                                            "type": "TabularTranslator",
+                                            "mappings": [
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['temp']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "Temperature",
+                                                        "type": "Double"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['feels_like']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "FeelsLike",
+                                                        "type": "Double"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['temp_min']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "TempMin",
+                                                        "type": "Double"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['temp_max']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "TempMax",
+                                                        "type": "Double"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['pressure']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "Pressure",
+                                                        "type": "Int32"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['main']['humidity']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "Humidity",
+                                                        "type": "Int32"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['wind']['speed']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "WindSpeed",
+                                                        "type": "Double"
+                                                    }
+                                                },
+                                                {
+                                                    "source": {
+                                                        "path": "$['name']"
+                                                    },
+                                                    "sink": {
+                                                        "name": "CityName",
+                                                        "type": "String"
+                                                    }
+                                                }
+                                            ]
+                                        }
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "sourceDataLake",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "capitol": {
+                                                    "value": "@item().name",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "AzureSqlTable1",
+                                            "type": "DatasetReference",
+                                            "parameters": {}
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "name": "Get Metadata json files",
+                        "type": "GetMetadata",
+                        "dependsOn": [
+                            {
+                                "activity": "Script Truncate Staging",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "dataset": {
+                                "referenceName": "sourceDataLake",
+                                "type": "DatasetReference",
+                                "parameters": {
+                                    "capitol": {
+                                        "value": "*.json",
+                                        "type": "Expression"
+                                    }
+                                }
+                            },
+                            "fieldList": [
+                                "childItems"
+                            ],
+                            "storeSettings": {
+                                "type": "AzureBlobFSReadSettings",
+                                "recursive": true,
+                                "enablePartitionDiscovery": false
+                            },
+                            "formatSettings": {
+                                "type": "JsonReadSettings"
+                            }
+                        }
+                    },
+                    {
+                        "name": "Script Truncate Staging",
+                        "type": "Script",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "linkedServiceName": {
+                            "referenceName": "AzureSqlDatabase1",
+                            "type": "LinkedServiceReference"
+                        },
+                        "typeProperties": {
+                            "scripts": [
+                                {
+                                    "type": "Query",
+                                    "text": "TRUNCATE TABLE [staging].[WeatherData]"
+                                }
+                            ],
+                            "scriptBlockExecutionTimeout": "02:00:00"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-02-07T15:22:15Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/sourceDataLake')]",
+                "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]",
+                "[concat(variables('factoryId'), '/datasets/AzureSqlTable1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pl1_extract_and_load_to_dl')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Lookup config",
+                        "type": "Lookup",
+                        "dependsOn": [],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "source": {
+                                "type": "JsonSource",
+                                "storeSettings": {
+                                    "type": "AzureBlobStorageReadSettings",
+                                    "recursive": true,
+                                    "enablePartitionDiscovery": false
+                                },
+                                "formatSettings": {
+                                    "type": "JsonReadSettings"
+                                }
+                            },
+                            "dataset": {
+                                "referenceName": "config",
+                                "type": "DatasetReference",
+                                "parameters": {}
+                            },
+                            "firstRowOnly": false
+                        }
+                    },
+                    {
+                        "name": "ForEach capitals",
+                        "type": "ForEach",
+                        "dependsOn": [
+                            {
+                                "activity": "Lookup config",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "userProperties": [],
+                        "typeProperties": {
+                            "items": {
+                                "value": "@activity('Lookup config').output.value",
+                                "type": "Expression"
+                            },
+                            "isSequential": false,
+                            "activities": [
+                                {
+                                    "name": "Copy data to datalake",
+                                    "type": "Copy",
+                                    "dependsOn": [],
+                                    "policy": {
+                                        "timeout": "0.12:00:00",
+                                        "retry": 0,
+                                        "retryIntervalInSeconds": 30,
+                                        "secureOutput": false,
+                                        "secureInput": false
+                                    },
+                                    "userProperties": [],
+                                    "typeProperties": {
+                                        "source": {
+                                            "type": "RestSource",
+                                            "httpRequestTimeout": "00:05:40",
+                                            "requestInterval": "00.00:00:00.010",
+                                            "requestMethod": "GET",
+                                            "paginationRules": {
+                                                "supportRFC5988": "true"
+                                            }
+                                        },
+                                        "sink": {
+                                            "type": "JsonSink",
+                                            "storeSettings": {
+                                                "type": "AzureBlobFSWriteSettings"
+                                            },
+                                            "formatSettings": {
+                                                "type": "JsonWriteSettings"
+                                            }
+                                        },
+                                        "enableStaging": false
+                                    },
+                                    "inputs": [
+                                        {
+                                            "referenceName": "OpenWeatherMapData",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "url": {
+                                                    "value": "@item().url",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ],
+                                    "outputs": [
+                                        {
+                                            "referenceName": "sinkDataLake",
+                                            "type": "DatasetReference",
+                                            "parameters": {
+                                                "City": {
+                                                    "value": "@item().city",
+                                                    "type": "Expression"
+                                                }
+                                            }
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-02-07T15:22:15Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/datasets/config')]",
+                "[concat(variables('factoryId'), '/datasets/OpenWeatherMapData')]",
+                "[concat(variables('factoryId'), '/datasets/sinkDataLake')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/pipeline_execution_ELT')]",
+            "type": "Microsoft.DataFactory/factories/pipelines",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "activities": [
+                    {
+                        "name": "Execute pl1 - to Data Lake",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "pl1_extract_and_load_to_dl",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Execute pl2 - to Database",
+                        "type": "ExecutePipeline",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute pl1 - to Data Lake",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "typeProperties": {
+                            "pipeline": {
+                                "referenceName": "pl2_transform_and_load_to_db",
+                                "type": "PipelineReference"
+                            },
+                            "waitOnCompletion": true,
+                            "parameters": {}
+                        }
+                    },
+                    {
+                        "name": "Script transform from staging to final",
+                        "type": "Script",
+                        "dependsOn": [
+                            {
+                                "activity": "Execute pl2 - to Database",
+                                "dependencyConditions": [
+                                    "Succeeded"
+                                ]
+                            }
+                        ],
+                        "policy": {
+                            "timeout": "0.12:00:00",
+                            "retry": 0,
+                            "retryIntervalInSeconds": 30,
+                            "secureOutput": false,
+                            "secureInput": false
+                        },
+                        "userProperties": [],
+                        "linkedServiceName": {
+                            "referenceName": "AzureSqlDatabase1",
+                            "type": "LinkedServiceReference"
+                        },
+                        "typeProperties": {
+                            "scripts": [
+                                {
+                                    "type": "Query",
+                                    "text": "WITH UniqueStagingData AS (\n    SELECT\n        CityName,\n        CAST([Date] AS DATE) AS [Date],\n        Temperature,\n        FeelsLike,\n        TempMin,\n        TempMax,\n        Pressure,\n        Humidity,\n        WindSpeed,\n        ROW_NUMBER() OVER (\n            PARTITION BY CityName, CAST([Date] AS DATE)\n            ORDER BY [Date] DESC\n        ) AS RowNum\n    FROM staging.WeatherData\n)\nINSERT INTO final.WeatherData (\n    CityName,\n    [Date],\n    Temperature,\n    FeelsLike,\n    TempMin,\n    TempMax,\n    Pressure,\n    Humidity,\n    WindSpeed\n)\nSELECT\n    CityName,\n    [Date],\n    Temperature,\n    FeelsLike,\n    TempMin,\n    TempMax,\n    Pressure,\n    Humidity,\n    WindSpeed\nFROM UniqueStagingData\nWHERE RowNum = 1\n  AND NOT EXISTS (\n      SELECT 1\n      FROM final.WeatherData AS tgt\n      WHERE tgt.CityName = UniqueStagingData.CityName\n        AND tgt.[Date] = UniqueStagingData.[Date]\n  );\n"
+                                }
+                            ],
+                            "scriptBlockExecutionTimeout": "02:00:00"
+                        }
+                    }
+                ],
+                "policy": {
+                    "elapsedTimeMetric": {}
+                },
+                "annotations": [],
+                "lastPublishTime": "2025-02-07T15:22:16Z"
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/pl1_extract_and_load_to_dl')]",
+                "[concat(variables('factoryId'), '/pipelines/pl2_transform_and_load_to_db')]",
+                "[concat(variables('factoryId'), '/linkedServices/AzureSqlDatabase1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureBlobStorage1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobStorage",
+                "typeProperties": {
+                    "connectionString": "[parameters('AzureBlobStorage1_connectionString')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureDataLakeStorage1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureBlobFS",
+                "typeProperties": {
+                    "url": "[parameters('AzureDataLakeStorage1_properties_typeProperties_url')]",
+                    "accountKey": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "AzureKeyVault1",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "datalakeKey"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/HttpServer_OpenWeatherMap')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "HttpServer",
+                "typeProperties": {
+                    "url": "[parameters('HttpServer_OpenWeatherMap_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/RestService_OpenWeatherMap')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "RestService",
+                "typeProperties": {
+                    "url": "[parameters('RestService_OpenWeatherMap_properties_typeProperties_url')]",
+                    "enableServerCertificateValidation": true,
+                    "authenticationType": "Anonymous"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureSqlDatabase1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureSqlDatabase",
+                "typeProperties": {
+                    "server": "[parameters('AzureSqlDatabase1_properties_typeProperties_server')]",
+                    "database": "[parameters('AzureSqlDatabase1_properties_typeProperties_database')]",
+                    "encrypt": "mandatory",
+                    "trustServerCertificate": true,
+                    "authenticationType": "SQL",
+                    "userName": "[parameters('AzureSqlDatabase1_properties_typeProperties_userName')]",
+                    "password": {
+                        "type": "AzureKeyVaultSecret",
+                        "store": {
+                            "referenceName": "AzureKeyVault1",
+                            "type": "LinkedServiceReference"
+                        },
+                        "secretName": "dbPassword"
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/linkedServices/AzureKeyVault1')]"
+            ]
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/AzureKeyVault1')]",
+            "type": "Microsoft.DataFactory/factories/linkedServices",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "type": "AzureKeyVault",
+                "typeProperties": {
+                    "baseUrl": "[parameters('AzureKeyVault1_properties_typeProperties_baseUrl')]"
+                }
+            },
+            "dependsOn": []
+        },
+        {
+            "name": "[concat(parameters('factoryName'), '/trigger1')]",
+            "type": "Microsoft.DataFactory/factories/triggers",
+            "apiVersion": "2018-06-01",
+            "properties": {
+                "annotations": [],
+                "runtimeState": "Stopped",
+                "pipelines": [
+                    {
+                        "pipelineReference": {
+                            "referenceName": "pipeline_execution_ELT",
+                            "type": "PipelineReference"
+                        },
+                        "parameters": {}
+                    }
+                ],
+                "type": "ScheduleTrigger",
+                "typeProperties": {
+                    "recurrence": {
+                        "frequency": "Day",
+                        "interval": 1,
+                        "startTime": "2025-01-10T13:05:00",
+                        "timeZone": "Central European Standard Time",
+                        "schedule": {
+                            "minutes": [
+                                30
+                            ],
+                            "hours": [
+                                14
+                            ]
+                        }
+                    }
+                }
+            },
+            "dependsOn": [
+                "[concat(variables('factoryId'), '/pipelines/pipeline_execution_ELT')]"
+            ]
+        }
+    ]
+}

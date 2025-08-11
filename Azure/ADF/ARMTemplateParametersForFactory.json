@@ -1,0 +1,33 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+        "factoryName": {
+            "value": "eruca-adf-prod"
+        },
+        "AzureBlobStorage1_connectionString": {
+            "value": ""
+        },
+        "AzureDataLakeStorage1_properties_typeProperties_url": {
+            "value": "https://erucadatalakeprod.dfs.core.windows.net/"
+        },
+        "HttpServer_OpenWeatherMap_properties_typeProperties_url": {
+            "value": "https://api.openweathermap.org/data/2.5/"
+        },
+        "RestService_OpenWeatherMap_properties_typeProperties_url": {
+            "value": "https://api.openweathermap.org/data/2.5/"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_server": {
+            "value": "eruca-server-prod.database.windows.net"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_database": {
+            "value": "eruca-db-prod"
+        },
+        "AzureSqlDatabase1_properties_typeProperties_userName": {
+            "value": "adm"
+        },
+        "AzureKeyVault1_properties_typeProperties_baseUrl": {
+            "value": "https://eruca-kv-prod.vault.azure.net/"
+        }
+    }
+}
